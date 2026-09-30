@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { Difficulty, SkinType } from "@/enums";
+import { Difficulty, SkinCondition, SkinType } from "@/enums";
 import { gradePlan } from "@/server/ai/grade";
 import { guardAiRequest } from "@/server/ai/guard";
 import { getSources } from "@/server/sources";
@@ -10,7 +10,8 @@ export const maxDuration = 60;
 
 const MAX_FIELD = 4000;
 const longText = z.string().min(1).max(MAX_FIELD);
-const list = z.array(z.string().max(MAX_FIELD)).max(30);
+const cited = z.object({ text: longText, sourceIds: z.array(z.string()).max(20) });
+const citedList = z.array(cited).max(30);
 
 const bodySchema = z.object({
   generated: z.object({
@@ -18,8 +19,16 @@ const bodySchema = z.object({
     description: longText,
     skinType: z.nativeEnum(SkinType),
     difficulty: z.nativeEnum(Difficulty),
-    reference: z.object({ diagnosis: longText, steps: list, products: list, notes: list }),
-    sourceIds: z.array(z.string()).max(20),
+    condition: z.nativeEnum(SkinCondition),
+    image: z.object({
+      id: z.string(),
+      condition: z.nativeEnum(SkinCondition),
+      url: z.string(),
+      credit: z.string(),
+      license: z.string(),
+      sourceUrl: z.string(),
+    }),
+    reference: z.object({ diagnosis: cited, steps: citedList, products: citedList, notes: citedList }),
   }),
   input: z.object({
     diagnosis: longText,

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { CRITERION_LABEL, CRITERION_MAX, ScoreCriterion } from "@/enums";
+import { Citation } from "@/components/Citation";
 import { SourceList } from "@/components/SourceList";
 import type { ChecklistItem, RedFlag, ScoreResponse, SourceRef } from "@/types";
 
@@ -7,23 +8,7 @@ interface ScoreViewProps {
   response: ScoreResponse;
 }
 
-interface CitationProps {
-  sourceIds: string[];
-  sources: SourceRef[];
-}
-
 const MAX_TOTAL = Object.values(CRITERION_MAX).reduce((sum, value) => sum + value, 0);
-
-function Citation({ sourceIds, sources }: CitationProps): ReactNode {
-  if (sourceIds.length === 0) {
-    return <span className="ml-1 text-xs text-stone-400">(kinh nghiệm thực hành, chưa có trích dẫn)</span>;
-  }
-  return (
-    <span className="ml-1 text-xs text-rose-700">
-      {sourceIds.map((id) => `[${sources.findIndex((source) => source.id === id) + 1}]`).join(" ")}
-    </span>
-  );
-}
 
 function ItemList({ items, sources, mark }: { items: ChecklistItem[]; sources: SourceRef[]; mark: string }): ReactNode {
   return (

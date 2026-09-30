@@ -4,6 +4,9 @@ import { AiProvider } from "@/enums";
 const TIMEOUT_MS = 50_000;
 const MAX_OUTPUT_TOKENS = 3000;
 const TEMPERATURE = 0.4;
+const OPENAI_BASE_URL = "https://api.openai.com/v1";
+// Model suy luận của OpenAI tính cả token suy nghĩ vào giới hạn đầu ra nên cần dư địa lớn hơn
+const OPENAI_MAX_COMPLETION_TOKENS = 8000;
 
 interface AiConfig {
   provider: AiProvider;
@@ -24,10 +27,10 @@ export function getAiConfig(): AiConfig | undefined {
   const provider = process.env.AI_PROVIDER as AiProvider | undefined;
   const apiKey = process.env.AI_API_KEY;
   const model = process.env.AI_MODEL;
-  const baseUrl = process.env.AI_BASE_URL ?? "";
+  const baseUrl = process.env.AI_BASE_URL ?? (provider === AiProvider.OpenAi ? OPENAI_BASE_URL : "");
   if (!provider || !apiKey || !model) return undefined;
   if (!Object.values(AiProvider).includes(provider)) return undefined;
-  if (provider === AiProvider.OpenAiCompatible && !baseUrl) return undefined;
+  if (provider !== AiProvider.Gemini && !baseUrl) return undefined;
   return { provider, apiKey, model, baseUrl };
 }
 
@@ -52,21 +55,28 @@ async function callGemini(config: AiConfig, system: string, user: string): Promi
   return data.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
 }
 
-async function callOpenAiCompatible(config: AiConfig, system: string, user: string): Promise<string> {
+function buildChatBody(config: AiConfig, system: string, user: string): Record<string, unknown> {
+  const base = {
+    model: config.model,
+    messages: [
+      { role: "system", content: system },
+      { role: "user", content: user },
+    ],
+    response_format: { type: "json_object" },
+  };
+  // OpenAI (dòng GPT-5/6) không nhận max_tokens và chỉ chấp nhận temperature mặc định
+  if (config.provider === AiProvider.OpenAi) {
+    return { ...base, max_completion_tokens: OPENAI_MAX_COMPLETION_TOKENS };
+  }
+  return { ...base, temperature: TEMPERATURE, max_tokens: MAX_OUTPUT_TOKENS };
+}
+
+async function callChatCompletions(config: AiConfig, system: string, user: string): Promise<string> {
   const res = await fetch(`${config.baseUrl.replace(/\/$/, "")}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${config.apiKey}` },
     signal: AbortSignal.timeout(TIMEOUT_MS),
-    body: JSON.stringify({
-      model: config.model,
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      response_format: { type: "json_object" },
-      temperature: TEMPERATURE,
-      max_tokens: MAX_OUTPUT_TOKENS,
-    }),
+    body: JSON.stringify(buildChatBody(config, system, user)),
   });
   if (!res.ok) throw new Error(`Nhà cung cấp AI trả lỗi ${res.status}`);
   const data = (await res.json()) as ChatResponse;
@@ -86,6 +96,6 @@ export async function completeJson(system: string, user: string): Promise<unknow
   const text =
     config.provider === AiProvider.Gemini
       ? await callGemini(config, system, user)
-      : await callOpenAiCompatible(config, system, user);
+      : await callChatCompletions(config, system, user);
   return parseJson(text);
 }

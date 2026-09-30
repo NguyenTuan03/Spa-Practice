@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { AdvancedScoreView } from "@/components/AdvancedScoreView";
 import { PlanFields } from "@/components/PlanFields";
-import { DIFFICULTY_LABEL, Difficulty, SKIN_TYPE_LABEL, SkinType } from "@/enums";
+import {
+  DIFFICULTY_LABEL,
+  Difficulty,
+  SKIN_CONDITION_LABEL,
+  SKIN_TYPE_LABEL,
+  SkinCondition,
+  SkinType,
+} from "@/enums";
 import {
   getAccessCode,
   loadAdvancedAttempts,
@@ -12,7 +19,7 @@ import {
   saveAdvancedAttempt,
   setAccessCode,
 } from "@/lib/advanced-storage";
-import type { TreatmentPlanInput } from "@/types";
+import type { SourceRef, TreatmentPlanInput } from "@/types";
 import type { AdvancedAttempt, GenerateCaseResponse, GeneratedCase, GradeResponse } from "@/types/advanced";
 
 const ANY = "";
@@ -21,6 +28,8 @@ export default function AdvancedPage(): ReactNode {
   const [code, setCode] = useState<string>("");
   const [skinType, setSkinType] = useState<SkinType | typeof ANY>(ANY);
   const [difficulty, setDifficulty] = useState<Difficulty | typeof ANY>(ANY);
+  const [condition, setCondition] = useState<SkinCondition | typeof ANY>(ANY);
+  const [referenceSources, setReferenceSources] = useState<SourceRef[]>([]);
   const [generated, setGenerated] = useState<GeneratedCase | undefined>();
   const [result, setResult] = useState<GradeResponse | undefined>();
   const [creating, setCreating] = useState<boolean>(false);
@@ -37,16 +46,21 @@ export default function AdvancedPage(): ReactNode {
     setError("");
     setResult(undefined);
     setAccessCode(code);
-    const data = await postAi<{ skinType?: SkinType; difficulty?: Difficulty }, GenerateCaseResponse>(
-      "/api/ai/generate-case",
-      { skinType: skinType || undefined, difficulty: difficulty || undefined },
-    );
+    const data = await postAi<
+      { skinType?: SkinType; difficulty?: Difficulty; condition?: SkinCondition },
+      GenerateCaseResponse
+    >("/api/ai/generate-case", {
+      skinType: skinType || undefined,
+      difficulty: difficulty || undefined,
+      condition: condition || undefined,
+    });
     setCreating(false);
     if (typeof data === "string") {
       setError(data);
       return;
     }
     setGenerated(data.generated);
+    setReferenceSources(data.sources);
   }
 
   async function handleGrade(input: TreatmentPlanInput): Promise<string | undefined> {
@@ -74,7 +88,7 @@ export default function AdvancedPage(): ReactNode {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Nâng cao: AI ra đề và chấm điểm</h1>
 
-      <section className="grid gap-3 rounded-xl border border-rose-100 bg-white p-4 sm:grid-cols-4">
+      <section className="grid gap-3 rounded-xl border border-rose-100 bg-white p-4 sm:grid-cols-5">
         <select
           value={skinType}
           onChange={(event) => setSkinType(event.target.value as SkinType | typeof ANY)}
@@ -93,6 +107,16 @@ export default function AdvancedPage(): ReactNode {
           <option value={ANY}>Độ khó: AI chọn</option>
           {Object.values(Difficulty).map((value) => (
             <option key={value} value={value}>{DIFFICULTY_LABEL[value]}</option>
+          ))}
+        </select>
+        <select
+          value={condition}
+          onChange={(event) => setCondition(event.target.value as SkinCondition | typeof ANY)}
+          className="rounded-lg border border-stone-200 p-2 text-sm"
+        >
+          <option value={ANY}>Tình trạng: AI chọn</option>
+          {Object.values(SkinCondition).map((value) => (
+            <option key={value} value={value}>{SKIN_CONDITION_LABEL[value]}</option>
           ))}
         </select>
         <input
@@ -116,6 +140,15 @@ export default function AdvancedPage(): ReactNode {
       {generated && (
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="space-y-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={generated.image.url} alt={generated.title} className="w-full rounded-xl border border-rose-100" />
+            <p className="text-xs text-stone-500">
+              Ảnh minh họa: {generated.image.credit}, {generated.image.license}.{" "}
+              <a href={generated.image.sourceUrl} target="_blank" rel="noreferrer" className="text-rose-700 underline">
+                Nguồn ảnh
+              </a>
+              . Mức độ trên ảnh có thể khác mô tả ca.
+            </p>
             <h2 className="text-xl font-bold">{generated.title}</h2>
             <p className="text-sm text-stone-500">
               {SKIN_TYPE_LABEL[generated.skinType]} · {DIFFICULTY_LABEL[generated.difficulty]} · ca do AI tạo
@@ -128,7 +161,7 @@ export default function AdvancedPage(): ReactNode {
         </div>
       )}
 
-      {generated && result && <AdvancedScoreView generated={generated} response={result} />}
+      {generated && result && <AdvancedScoreView generated={generated} referenceSources={referenceSources} response={result} />}
 
       {history.length > 0 && (
         <section className="space-y-2">

@@ -1,14 +1,35 @@
 import type { ReactNode } from "react";
-import { CRITERION_LABEL } from "@/enums";
+import { Citation } from "@/components/Citation";
 import { SourceList } from "@/components/SourceList";
-import type { GeneratedCase, GradeResponse } from "@/types/advanced";
+import { CRITERION_LABEL } from "@/enums";
+import type { SourceRef } from "@/types";
+import type { CitedText, GeneratedCase, GradeResponse } from "@/types/advanced";
 
 interface AdvancedScoreViewProps {
   generated: GeneratedCase;
+  referenceSources: SourceRef[];
   response: GradeResponse;
 }
 
 const MAX_TOTAL = 100;
+const AI_EMPTY_LABEL = "(AI tổng hợp, chưa có nguồn cụ thể)";
+
+function mergeSources(first: SourceRef[], second: SourceRef[]): SourceRef[] {
+  return [...first, ...second.filter((item) => !first.some((existing) => existing.id === item.id))];
+}
+
+function CitedList({ items, sources }: { items: CitedText[]; sources: SourceRef[] }): ReactNode {
+  return (
+    <ul className="list-disc space-y-1 pl-5 text-sm">
+      {items.map((entry) => (
+        <li key={entry.text}>
+          {entry.text}
+          <Citation sourceIds={entry.sourceIds} sources={sources} emptyLabel={AI_EMPTY_LABEL} />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function Bullets({ items }: { items: string[] }): ReactNode {
   return (
@@ -20,8 +41,10 @@ function Bullets({ items }: { items: string[] }): ReactNode {
   );
 }
 
-export function AdvancedScoreView({ generated, response }: AdvancedScoreViewProps): ReactNode {
-  const { grade, sources } = response;
+export function AdvancedScoreView({ generated, referenceSources, response }: AdvancedScoreViewProps): ReactNode {
+  const { grade } = response;
+  const sources = mergeSources(referenceSources, response.sources);
+  const { reference } = generated;
 
   return (
     <div className="space-y-5">
@@ -77,29 +100,35 @@ export function AdvancedScoreView({ generated, response }: AdvancedScoreViewProp
         </div>
       </section>
 
-      <p className="rounded-lg bg-stone-100 p-3 text-sm">{grade.advice}</p>
+      <p className="rounded-lg bg-stone-100 p-3 text-sm">
+        {grade.advice}
+        <Citation sourceIds={grade.sourceIds} sources={sources} emptyLabel="" />
+      </p>
 
       <section className="space-y-2 rounded-xl border border-rose-100 bg-white p-4">
-        <h3 className="font-semibold">Phác đồ tham chiếu do AI soạn</h3>
-        <p className="text-sm">{generated.reference.diagnosis}</p>
+        <h3 className="font-semibold">Phác đồ tham chiếu do AI soạn (số [n] là nguồn bên dưới)</h3>
+        <p className="text-sm">
+          {reference.diagnosis.text}
+          <Citation sourceIds={reference.diagnosis.sourceIds} sources={sources} emptyLabel={AI_EMPTY_LABEL} />
+        </p>
         <h4 className="text-sm font-medium">Quy trình</h4>
-        <Bullets items={generated.reference.steps} />
+        <CitedList items={reference.steps} sources={sources} />
         <h4 className="text-sm font-medium">Sản phẩm</h4>
-        <Bullets items={generated.reference.products} />
+        <CitedList items={reference.products} sources={sources} />
         <h4 className="text-sm font-medium">Lưu ý</h4>
-        <Bullets items={generated.reference.notes} />
+        <CitedList items={reference.notes} sources={sources} />
       </section>
 
       {sources.length > 0 && (
         <section className="space-y-2 rounded-xl border border-stone-200 bg-white p-4">
-          <h3 className="font-semibold">Nguồn AI dựa vào</h3>
+          <h3 className="font-semibold">Nguồn tham khảo</h3>
           <SourceList sources={sources} />
         </section>
       )}
 
       <p className="text-xs text-stone-500">
-        Ca, phác đồ tham chiếu và điểm đều do AI tạo, chưa có chuyên gia duyệt nên có thể sai. AI được yêu cầu bám
-        theo các nguồn trên, hãy đối chiếu với tab Luyện tập (chấm bằng checklist có trích dẫn) khi nghi ngờ.
+        Ca, phác đồ tham chiếu và điểm đều do AI tạo, chưa có chuyên gia duyệt nên có thể sai. Nguồn được gắn chỉ khi AI
+        nói ý đó dựa vào nguồn, hãy mở link để đối chiếu. Ý ghi &quot;chưa có nguồn cụ thể&quot; cần kiểm chứng thêm.
       </p>
     </div>
   );

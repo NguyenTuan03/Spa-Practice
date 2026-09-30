@@ -1,11 +1,25 @@
-import type { Difficulty, ScoreCriterion, SkinType } from "@/enums";
+import type { Difficulty, ScoreCriterion, SkinCondition, SkinType } from "@/enums";
 import type { SourceRef, TreatmentPlanInput } from "@/types";
 
+export interface CitedText {
+  text: string;
+  sourceIds: string[];
+}
+
 export interface ReferencePlan {
-  diagnosis: string;
-  steps: string[];
-  products: string[];
-  notes: string[];
+  diagnosis: CitedText;
+  steps: CitedText[];
+  products: CitedText[];
+  notes: CitedText[];
+}
+
+export interface LibraryImage {
+  id: string;
+  condition: SkinCondition;
+  url: string;
+  credit: string;
+  license: string;
+  sourceUrl: string;
 }
 
 export interface GeneratedCase {
@@ -13,8 +27,9 @@ export interface GeneratedCase {
   description: string;
   skinType: SkinType;
   difficulty: Difficulty;
+  condition: SkinCondition;
+  image: LibraryImage;
   reference: ReferencePlan;
-  sourceIds: string[];
 }
 
 export interface GenerateCaseResponse {

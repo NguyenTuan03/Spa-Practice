@@ -20,7 +20,14 @@ Ca mô phỏng ở `src/data/cases.ts`. Ảnh đang là placeholder; thêm ảnh
 Lịch sử điểm lưu trong localStorage (`src/lib/storage.ts`).
 
 ## Tab Nâng cao (AI ra đề + chấm)
-Tùy chọn, cần API key. Đặt biến môi trường (xem `.env.example`): `AI_PROVIDER` (`gemini` hoặc `openai-compatible`), `AI_API_KEY`, `AI_MODEL`, và `AI_BASE_URL` nếu dùng openai-compatible (DeepSeek, OpenAI, Groq, OpenRouter...).
+Tùy chọn, cần API key. Đặt biến môi trường (xem `.env.example`): `AI_PROVIDER` (`gemini`, `openai` hoặc `openai-compatible`), `AI_API_KEY`, `AI_MODEL`, và `AI_BASE_URL` nếu dùng openai-compatible (DeepSeek, OpenAI, Groq, OpenRouter...).
 - AI nhận cơ sở kiến thức đã kiểm chứng (checklist + nguồn) trong prompt, nên bám theo nguồn thay vì tự bịa. Ca và phác đồ do AI tạo vẫn chưa có chuyên gia duyệt.
 - Khi deploy công khai, đặt `ADVANCED_ACCESS_CODE` để người lạ không dùng hết quota; nhập mã này trong tab Nâng cao.
 - Đường Gemini chưa được thử với API thật; đường openai-compatible đã thử với server giả lập.
+
+## Thư viện ảnh cho tab Nâng cao
+- Tab Nâng cao chỉ tạo ca cho tình trạng đã có ảnh trong `src/data/image-library.ts`; thư viện trống thì báo lỗi, không tạo ca không có ảnh.
+- Bỏ ảnh vào `public/images/library/`, khai báo tình trạng, tác giả, giấy phép, link gốc (có ví dụ trong file). Ảnh hiển thị kèm credit và link nguồn.
+- Không lấy ảnh tự động từ Google Images (vi phạm điều khoản và bản quyền). Tự lọc: Google Images > Công cụ > Quyền sử dụng > Giấy phép Creative Commons, hoặc tìm trên commons.wikimedia.org, rồi kiểm tra lại trang gốc.
+- AI chọn tình trạng khớp ảnh nhưng không nhìn ảnh, nên mức độ trên ảnh có thể khác mô tả ca.
+- Mỗi ý trong phác đồ tham chiếu có số [n] trỏ tới nguồn; ý không có nguồn được ghi rõ.

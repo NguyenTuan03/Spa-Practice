@@ -48,6 +48,25 @@ export const CRITERION_MAX: Record<ScoreCriterion, number> = {
 export enum AiProvider {
   Gemini = "gemini",
   OpenAiCompatible = "openai-compatible",
+  OpenAi = "openai",
 }
 
 export const ACCESS_CODE_HEADER = "x-access-code";
+
+export enum SkinCondition {
+  Acne = "acne",
+  Comedones = "comedones",
+  DrySkin = "dry-skin",
+  Melasma = "melasma",
+  Rosacea = "rosacea",
+  Aging = "aging",
+}
+
+export const SKIN_CONDITION_LABEL: Record<SkinCondition, string> = {
+  [SkinCondition.Acne]: "Mụn viêm",
+  [SkinCondition.Comedones]: "Mụn đầu đen, lỗ chân lông to",
+  [SkinCondition.DrySkin]: "Da khô, bong tróc",
+  [SkinCondition.Melasma]: "Nám, tăng sắc tố",
+  [SkinCondition.Rosacea]: "Đỏ mặt, giãn mạch (nghi rosacea)",
+  [SkinCondition.Aging]: "Lão hóa, nếp nhăn",
+};
