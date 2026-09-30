@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCase } from "@/data/cases";
-import { getExpertAnswer } from "@/server/expert-answers";
+import { getCaseKey } from "@/server/expert-data";
 import { scorePlan } from "@/server/scoring";
+import { getSources } from "@/server/sources";
 import type { ScoreResponse } from "@/types";
-
-export const maxDuration = 60;
 
 const MIN_LENGTH = 1;
 
@@ -26,18 +25,13 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const { caseId, input } = parsed.data;
-  const skinCase = getCase(caseId);
-  const expert = getExpertAnswer(caseId);
-  if (!skinCase || !expert) {
+  const key = getCaseKey(caseId);
+  if (!getCase(caseId) || !key) {
     return NextResponse.json({ error: "Không tìm thấy ca" }, { status: 404 });
   }
 
-  try {
-    const result = await scorePlan(skinCase, expert, input);
-    const body: ScoreResponse = { result, expert };
-    return NextResponse.json(body);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Lỗi chấm điểm";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  const result = scorePlan(key, input);
+  const sourceIds = [...result.matched, ...result.missed, ...result.flagged].flatMap((entry) => entry.sourceIds);
+  const body: ScoreResponse = { result, sources: getSources([...new Set(sourceIds)]) };
+  return NextResponse.json(body);
 }

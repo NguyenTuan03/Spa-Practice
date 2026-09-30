@@ -44,3 +44,10 @@ export const CRITERION_MAX: Record<ScoreCriterion, number> = {
   [ScoreCriterion.Products]: 25,
   [ScoreCriterion.Notes]: 15,
 };
+
+export enum AiProvider {
+  Gemini = "gemini",
+  OpenAiCompatible = "openai-compatible",
+}
+
+export const ACCESS_CODE_HEADER = "x-access-code";

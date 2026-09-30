@@ -4,17 +4,41 @@ export interface SkinCase {
   id: string;
   title: string;
   imageUrl: string;
+  imageCredit?: string;
   description: string;
   skinType: SkinType;
   difficulty: Difficulty;
 }
 
-export interface ExpertAnswer {
+export interface SourceRef {
+  id: string;
+  title: string;
+  authors: string;
+  publisher: string;
+  year: string;
+  url: string;
+  reviewers?: string[];
+}
+
+export interface ChecklistItem {
+  id: string;
+  criterion: ScoreCriterion;
+  label: string;
+  keywords: string[];
+  sourceIds: string[];
+}
+
+export interface RedFlag {
+  id: string;
+  label: string;
+  keywords: string[];
+  sourceIds: string[];
+}
+
+export interface CaseKey {
   caseId: string;
-  diagnosis: string;
-  steps: string[];
-  products: string[];
-  notes: string[];
+  items: ChecklistItem[];
+  redFlags: RedFlag[];
 }
 
 export interface TreatmentPlanInput {
@@ -27,20 +51,23 @@ export interface TreatmentPlanInput {
 export interface CriterionScore {
   criterion: ScoreCriterion;
   score: number;
-  comment: string;
+  max: number;
+  matched: number;
+  total: number;
 }
 
 export interface ScoreResult {
   total: number;
+  penalty: number;
   breakdown: CriterionScore[];
-  strengths: string[];
-  missing: string[];
-  advice: string;
+  matched: ChecklistItem[];
+  missed: ChecklistItem[];
+  flagged: RedFlag[];
 }
 
 export interface ScoreResponse {
   result: ScoreResult;
-  expert: ExpertAnswer;
+  sources: SourceRef[];
 }
 
 export interface Attempt {

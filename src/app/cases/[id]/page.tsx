@@ -22,7 +22,9 @@ export default async function CasePage({ params }: CasePageProps): Promise<React
         <p className="text-sm text-stone-500">
           {SKIN_TYPE_LABEL[skinCase.skinType]} · {DIFFICULTY_LABEL[skinCase.difficulty]}
         </p>
+        {skinCase.imageCredit && <p className="text-xs text-stone-500">Ảnh: {skinCase.imageCredit}</p>}
         <p className="leading-relaxed">{skinCase.description}</p>
+        <p className="text-xs text-stone-500">Ca mô phỏng để luyện tập, không phải bệnh nhân thật.</p>
       </section>
       <PlanForm caseId={skinCase.id} />
     </div>
