@@ -1,23 +1,13 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Be_Vietnam_Pro, Playfair_Display } from "next/font/google";
 import Link from "next/link";
 import { NavLink } from "@/components/NavLink";
 import "./globals.css";
 
-const beVietnamPro = Be_Vietnam_Pro({
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-be-vietnam-pro",
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-playfair",
-  display: "swap",
-});
+// Không dùng next/font/google: loader của nó crash khi Google trả URL font không có đuôi file,
+// làm build Vercel thất bại ngẫu nhiên. Tải font bằng thẻ <link> ở trình duyệt thì build không phụ thuộc Google.
+const FONTS_URL =
+  "https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap";
 
 export const metadata: Metadata = {
   title: "Spa Practice",
@@ -30,7 +20,12 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps): ReactNode {
   return (
-    <html lang="vi" className={`${beVietnamPro.variable} ${playfair.variable}`}>
+    <html lang="vi">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href={FONTS_URL} />
+      </head>
       <body>
         <header className="sticky top-0 z-50 border-b border-rose-100/80 bg-white/80 backdrop-blur-md">
           <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">

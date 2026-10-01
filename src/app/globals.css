@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+:root {
+  --font-be-vietnam-pro: "Be Vietnam Pro";
+  --font-playfair: "Playfair Display";
+}
+
 @theme inline {
   --font-sans: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-playfair), ui-serif, serif;

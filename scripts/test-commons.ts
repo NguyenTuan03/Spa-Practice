@@ -19,6 +19,8 @@ const fixture: CommonsResponse = {
       "5": page(5, "File:Acne small.jpg", "image/jpeg", 200, "CC0"),
       "6": page(6, "File:Acne icon.svg", "image/svg+xml", 800, "CC0"),
       "7": page(7, "File:Acne pd.jpg", "image/jpeg", 800, "Public domain", ""),
+      "9": page(9, "File:Acne vulgaris photograph.jpg", "image/jpeg", 800, "CC BY 2.0"),
+      "10": page(10, "File:Acne map of cases.jpg", "image/jpeg", 800, "CC BY 2.0"),
       "8": page(8, "File:Acne gfdl.jpg", "image/jpeg", 800, "GFDL"),
     },
   },
@@ -26,7 +28,7 @@ const fixture: CommonsResponse = {
 
 const result = parseCommons(fixture, SkinCondition.Acne);
 const ids = result.map((image) => image.id).sort();
-const expected = ["commons-1", "commons-7"];
+const expected = ["commons-1", "commons-7", "commons-9"];
 if (JSON.stringify(ids) !== JSON.stringify(expected)) throw new Error(`Sai: ${ids.join(",")} (kỳ vọng ${expected.join(",")})`);
 const first = result.find((image) => image.id === "commons-1");
 if (first?.credit !== "Tác giả A") throw new Error(`Credit sai: ${first?.credit}`);
