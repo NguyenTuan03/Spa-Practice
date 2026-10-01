@@ -49,6 +49,11 @@ export interface AiCorrectPoint {
   evidence: string;
 }
 
+export interface AiWrongPoint {
+  statement: string;
+  correction: string;
+}
+
 export interface AiUnsafePoint {
   issue: string;
   reason: string;
@@ -58,6 +63,7 @@ export interface AiGrade {
   total: number;
   breakdown: AiCriterionScore[];
   correct: AiCorrectPoint[];
+  wrong: AiWrongPoint[];
   missing: string[];
   unsafe: AiUnsafePoint[];
   advice: string;

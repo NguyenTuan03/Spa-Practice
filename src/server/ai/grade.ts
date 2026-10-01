@@ -9,6 +9,7 @@ import { VALID_SOURCE_IDS, buildKnowledgeBase } from "./knowledge";
 const gradeSchema = z.object({
   breakdown: z.array(z.object({ criterion: z.nativeEnum(ScoreCriterion), score: z.number(), comment: z.string() })),
   correct: z.array(z.object({ point: z.string(), evidence: z.string() })),
+  wrong: z.array(z.object({ statement: z.string(), correction: z.string() })),
   missing: z.array(z.string()),
   unsafe: z.array(z.object({ issue: z.string(), reason: z.string() })),
   advice: z.string(),
@@ -17,13 +18,15 @@ const gradeSchema = z.object({
 
 const SYSTEM_PROMPT = `Bạn là giảng viên chấm bài phác đồ chăm sóc da mặt cho học viên spa. So sánh BÀI LÀM với PHÁC ĐỒ THAM CHIẾU và KIẾN THỨC ĐÃ KIỂM CHỨNG.
 Quy tắc:
-- Chấm theo ý nghĩa, cách diễn đạt khác hoặc hoạt chất tương đương vẫn được điểm. Không cho điểm ý học viên không viết.
+- Chấm NGHIÊM và THẲNG THẮN. Sai là sai, không nói giảm nói tránh, không khen cho có, không dùng cụm "gần đúng" hay "khá tốt" để làm mềm điểm. Ý sai hoặc phản khoa học thì cho 0 điểm ý đó và còn bị trừ vào tiêu chí liên quan; bài chung chung, thiếu cụ thể thì điểm thấp.
+- Chỉ chấp nhận cách diễn đạt khác hoặc hoạt chất tương đương khi ý nghĩa thật sự đúng. Không cho điểm ý học viên không viết.
+- Mỗi ý sai phải nêu trong "wrong": "statement" trích nguyên văn câu sai trong bài, "correction" nói thẳng vì sao sai và đúng phải là gì.
 - Mỗi ý đúng phải kèm "evidence" là trích nguyên văn ngắn từ bài làm. Không bịa trích dẫn.
 - Nêu rõ hành động thiếu an toàn (ví dụ tẩy da chết mạnh trên da kích ứng) trong "unsafe" và trừ điểm tiêu chí liên quan.
 - Thang điểm tối đa: ${Object.values(ScoreCriterion).map((c) => `${c} (${CRITERION_LABEL[c]}) ${CRITERION_MAX[c]}`).join(", ")}.
 - sourceIds chỉ chọn từ danh sách NGUỒN, chỉ khi nhận xét dựa vào nguồn đó.
 - Nhận xét ngắn gọn, cụ thể, tiếng Việt.
-Chỉ trả JSON đúng dạng: {"breakdown":[{"criterion":"diagnosis|steps|products|notes","score":number,"comment":string}],"correct":[{"point":string,"evidence":string}],"missing":string[],"unsafe":[{"issue":string,"reason":string}],"advice":string,"sourceIds":string[]}`;
+Chỉ trả JSON đúng dạng: {"breakdown":[{"criterion":"diagnosis|steps|products|notes","score":number,"comment":string}],"correct":[{"point":string,"evidence":string}],"wrong":[{"statement":string,"correction":string}],"missing":string[],"unsafe":[{"issue":string,"reason":string}],"advice":string,"sourceIds":string[]}`;
 
 export async function gradePlan(generated: GeneratedCase, input: TreatmentPlanInput): Promise<AiGrade> {
   const user = `${buildKnowledgeBase()}\n\nCA: ${JSON.stringify({
@@ -40,5 +43,5 @@ export async function gradePlan(generated: GeneratedCase, input: TreatmentPlanIn
   });
   const total = breakdown.reduce((sum, entry) => sum + entry.score, 0);
   const sourceIds = parsed.sourceIds.filter((id) => VALID_SOURCE_IDS.includes(id));
-  return { total, breakdown, correct: parsed.correct, missing: parsed.missing, unsafe: parsed.unsafe, advice: parsed.advice, sourceIds };
+  return { total, breakdown, correct: parsed.correct, wrong: parsed.wrong, missing: parsed.missing, unsafe: parsed.unsafe, advice: parsed.advice, sourceIds };
 }

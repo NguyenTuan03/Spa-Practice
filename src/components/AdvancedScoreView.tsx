@@ -55,6 +55,20 @@ export function AdvancedScoreView({ generated, referenceSources, response }: Adv
         </p>
       </div>
 
+      {grade.wrong.length > 0 && (
+        <section className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">
+          <h3 className="font-semibold text-red-700">Ý sai</h3>
+          <ul className="mt-1 space-y-2">
+            {grade.wrong.map((entry) => (
+              <li key={entry.statement}>
+                <span className="italic">“{entry.statement}”</span>
+                <span className="block">{entry.correction}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {grade.unsafe.length > 0 && (
         <section className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm">
           <h3 className="font-semibold text-red-700">Điểm thiếu an toàn</h3>
