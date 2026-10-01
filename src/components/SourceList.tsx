@@ -7,10 +7,15 @@ interface SourceListProps {
 
 export function SourceList({ sources }: SourceListProps): ReactNode {
   return (
-    <ol className="list-decimal space-y-2 pl-5 text-sm">
+    <ol className="list-decimal space-y-2.5 pl-5 text-sm">
       {sources.map((source) => (
         <li key={source.id}>
-          <a href={source.url} target="_blank" rel="noreferrer" className="font-medium text-rose-700 underline">
+          <a
+            href={source.url}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-rose-700 underline underline-offset-2 transition-colors duration-200 hover:text-rose-800"
+          >
             {source.title}
           </a>
           <span className="block text-stone-600">

@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { AdvancedScoreView } from "@/components/AdvancedScoreView";
 import { ImageLibraryManager } from "@/components/ImageLibraryManager";
+import { FlaskIcon, SparklesIcon, SpinnerIcon } from "@/components/icons";
 import { PlanFields } from "@/components/PlanFields";
+import { Badge } from "@/components/ui";
 import {
   DIFFICULTY_LABEL,
   Difficulty,
@@ -32,6 +34,8 @@ import type {
 } from "@/types/advanced";
 
 const ANY = "";
+const selectClass =
+  "w-full appearance-none rounded-xl border border-stone-200 bg-white p-3 text-base text-stone-700 shadow-sm transition-colors duration-200 focus:border-rose-400 focus:outline-none sm:text-sm";
 
 // Bỏ ảnh (có thể là data URL lớn) trước khi gửi server hoặc lưu lịch sử
 function toCaseCore(value: GeneratedCase): CaseCore {
@@ -43,6 +47,40 @@ function toCaseCore(value: GeneratedCase): CaseCore {
     condition: value.condition,
     reference: value.reference,
   };
+}
+
+function scoreTone(total: number): "green" | "amber" | "red" {
+  if (total >= 80) return "green";
+  if (total >= 50) return "amber";
+  return "red";
+}
+
+function FilterSelect<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
+  labels,
+}: {
+  label: string;
+  value: T | typeof ANY;
+  onChange: (value: T | typeof ANY) => void;
+  options: T[];
+  labels: Record<T, string>;
+}): ReactNode {
+  return (
+    <label className="block space-y-1.5">
+      <span className="text-xs font-medium text-stone-500">{label}</span>
+      <select value={value} onChange={(event) => onChange(event.target.value as T | typeof ANY)} className={selectClass}>
+        <option value={ANY}>AI tự chọn</option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {labels[option]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 export default function AdvancedPage(): ReactNode {
@@ -114,76 +152,91 @@ export default function AdvancedPage(): ReactNode {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Nâng cao: AI ra đề và chấm điểm</h1>
+    <div className="space-y-8">
+      <section className="space-y-1.5">
+        <h1 className="font-display text-2xl font-bold text-stone-900 sm:text-3xl">
+          Nâng cao: AI ra đề và chấm điểm
+        </h1>
+        <p className="text-sm text-stone-500 sm:text-base">
+          Chọn tiêu chí (hoặc để AI tự chọn), tạo một ca da liễu, viết phác đồ điều trị rồi nộp để AI chấm điểm và
+          góp ý.
+        </p>
+      </section>
 
-      <section className="grid gap-3 rounded-xl border border-rose-100 bg-white p-4 sm:grid-cols-5">
-        <select
-          value={skinType}
-          onChange={(event) => setSkinType(event.target.value as SkinType | typeof ANY)}
-          className="rounded-lg border border-stone-200 p-2 text-sm"
-        >
-          <option value={ANY}>Loại da: AI chọn</option>
-          {Object.values(SkinType).map((value) => (
-            <option key={value} value={value}>{SKIN_TYPE_LABEL[value]}</option>
-          ))}
-        </select>
-        <select
-          value={difficulty}
-          onChange={(event) => setDifficulty(event.target.value as Difficulty | typeof ANY)}
-          className="rounded-lg border border-stone-200 p-2 text-sm"
-        >
-          <option value={ANY}>Độ khó: AI chọn</option>
-          {Object.values(Difficulty).map((value) => (
-            <option key={value} value={value}>{DIFFICULTY_LABEL[value]}</option>
-          ))}
-        </select>
-        <select
-          value={condition}
-          onChange={(event) => setCondition(event.target.value as SkinCondition | typeof ANY)}
-          className="rounded-lg border border-stone-200 p-2 text-sm"
-        >
-          <option value={ANY}>Tình trạng: AI chọn</option>
-          {Object.values(SkinCondition).map((value) => (
-            <option key={value} value={value}>{SKIN_CONDITION_LABEL[value]}</option>
-          ))}
-        </select>
-        <input
-          type="password"
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
-          placeholder="Mã truy cập (nếu có)"
-          className="rounded-lg border border-stone-200 p-2 text-sm"
-        />
+      <section className="space-y-4 rounded-2xl border border-rose-100 bg-white p-4 shadow-sm shadow-rose-900/5 sm:p-5">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <FilterSelect label="Loại da" value={skinType} onChange={setSkinType} options={Object.values(SkinType)} labels={SKIN_TYPE_LABEL} />
+          <FilterSelect
+            label="Độ khó"
+            value={difficulty}
+            onChange={setDifficulty}
+            options={Object.values(Difficulty)}
+            labels={DIFFICULTY_LABEL}
+          />
+          <FilterSelect
+            label="Tình trạng"
+            value={condition}
+            onChange={setCondition}
+            options={Object.values(SkinCondition)}
+            labels={SKIN_CONDITION_LABEL}
+          />
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-stone-500">Mã truy cập</span>
+            <input
+              type="password"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="Nếu có"
+              className="w-full rounded-xl border border-stone-200 bg-white p-3 text-base text-stone-700 shadow-sm transition-colors duration-200 focus:border-rose-400 focus:outline-none sm:text-sm"
+            />
+          </label>
+        </div>
         <button
           type="button"
           onClick={handleCreate}
           disabled={creating}
-          className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3.5 text-sm font-semibold text-white shadow-sm shadow-rose-600/30 transition-all duration-200 hover:bg-rose-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 sm:py-3"
         >
+          {creating ? <SpinnerIcon className="h-4 w-4" /> : <SparklesIcon className="h-4 w-4" />}
           {creating ? "AI đang tạo ca..." : "Tạo ca bằng AI"}
         </button>
       </section>
+
       <ImageLibraryManager images={userImages} onChange={setUserImages} />
-      {error && <p className="text-sm text-red-600">{error}</p>}
+
+      {error && (
+        <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>
+      )}
 
       {generated && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <section className="space-y-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={generated.image.url} alt={generated.title} className="w-full rounded-xl border border-rose-100" />
+          <section className="space-y-3">
+            <div className="overflow-hidden rounded-2xl border border-rose-100 bg-white shadow-sm shadow-rose-900/5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={generated.image.url}
+                alt={generated.title}
+                className="aspect-[4/3] w-full object-cover"
+              />
+            </div>
             <p className="text-xs text-stone-500">
               Ảnh minh họa: {generated.image.credit}, {generated.image.license}.{" "}
-              <a href={generated.image.sourceUrl} target="_blank" rel="noreferrer" className="text-rose-700 underline">
+              <a href={generated.image.sourceUrl} target="_blank" rel="noreferrer" className="font-medium text-rose-700 underline underline-offset-2">
                 Nguồn ảnh
               </a>
               . Mức độ trên ảnh có thể khác mô tả ca.
             </p>
-            <h2 className="text-xl font-bold">{generated.title}</h2>
-            <p className="text-sm text-stone-500">
-              {SKIN_TYPE_LABEL[generated.skinType]} · {DIFFICULTY_LABEL[generated.difficulty]} · ca do AI tạo
-            </p>
-            <p className="leading-relaxed">{generated.description}</p>
+            <div className="space-y-2 rounded-2xl border border-rose-100 bg-white p-4 shadow-sm shadow-rose-900/5">
+              <h2 className="text-xl font-bold text-stone-900">{generated.title}</h2>
+              <div className="flex flex-wrap gap-2">
+                <Badge tone="rose">{SKIN_TYPE_LABEL[generated.skinType]}</Badge>
+                <Badge tone="amber">{DIFFICULTY_LABEL[generated.difficulty]}</Badge>
+                <Badge tone="neutral" icon={<FlaskIcon className="h-3.5 w-3.5" />}>
+                  Ca do AI tạo
+                </Badge>
+              </div>
+              <p className="leading-relaxed text-stone-700">{generated.description}</p>
+            </div>
           </section>
           {!result && (
             <PlanFields key={generated.title + generated.description} submitLabel="Nộp bài cho AI chấm" loadingLabel="AI đang chấm..." onSubmit={handleGrade} />
@@ -194,13 +247,16 @@ export default function AdvancedPage(): ReactNode {
       {generated && result && <AdvancedScoreView generated={generated} referenceSources={referenceSources} response={result} />}
 
       {history.length > 0 && (
-        <section className="space-y-2">
-          <h2 className="font-semibold">Lịch sử tab Nâng cao</h2>
-          <ul className="space-y-1 text-sm">
+        <section className="space-y-3">
+          <h2 className="font-semibold text-stone-800">Lịch sử tab Nâng cao</h2>
+          <ul className="space-y-2">
             {history.map((entry) => (
-              <li key={entry.id} className="flex justify-between rounded-lg border border-rose-100 bg-white p-2">
-                <span>{entry.generated.title}</span>
-                <span className="font-bold text-rose-700">{entry.response.grade.total}</span>
+              <li
+                key={entry.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-rose-100 bg-white p-3 shadow-sm shadow-rose-900/5"
+              >
+                <span className="truncate text-sm text-stone-700">{entry.generated.title}</span>
+                <Badge tone={scoreTone(entry.response.grade.total)}>{entry.response.grade.total}/100</Badge>
               </li>
             ))}
           </ul>

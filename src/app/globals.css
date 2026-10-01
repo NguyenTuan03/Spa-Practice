@@ -1,6 +1,47 @@
 @import "tailwindcss";
 
+@theme inline {
+  --font-sans: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), ui-serif, serif;
+}
+
+:root {
+  --color-cream: #fdf8f4;
+  --color-ink: #2d2522;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: #faf6f3;
-  color: #2d2522;
+  background:
+    radial-gradient(1100px 500px at 10% -10%, #fff1ec 0%, transparent 60%),
+    radial-gradient(900px 450px at 110% 0%, #fef3e2 0%, transparent 55%),
+    var(--color-cream);
+  background-attachment: fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #fecdd3;
+  color: #881337;
+}
+
+/* Visible, consistent focus ring for keyboard navigation across the app */
+:focus-visible {
+  outline: 2px solid #e11d48;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
