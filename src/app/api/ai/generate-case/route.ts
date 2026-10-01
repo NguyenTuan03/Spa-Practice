@@ -12,6 +12,7 @@ const bodySchema = z.object({
   skinType: z.nativeEnum(SkinType).optional(),
   difficulty: z.nativeEnum(Difficulty).optional(),
   condition: z.nativeEnum(SkinCondition).optional(),
+  userConditions: z.array(z.nativeEnum(SkinCondition)).max(10).default([]),
 });
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -22,8 +23,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!parsed.success) return NextResponse.json({ error: "Dữ liệu không hợp lệ" }, { status: 400 });
 
   try {
-    const generated = await generateCase(parsed.data);
-    const body: GenerateCaseResponse = { generated, sources: getSources(collectReferenceSourceIds(generated)) };
+    const { generated, image } = await generateCase(parsed.data);
+    const body: GenerateCaseResponse = { generated, image, sources: getSources(collectReferenceSourceIds(generated)) };
     return NextResponse.json(body);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Không tạo được ca";

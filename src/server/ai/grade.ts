@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { CRITERION_LABEL, CRITERION_MAX, ScoreCriterion } from "@/enums";
 import type { TreatmentPlanInput } from "@/types";
-import type { AiGrade, GeneratedCase } from "@/types/advanced";
+import type { AiGrade, CaseCore } from "@/types/advanced";
 import { completeJson } from "./client";
 import { VALID_SOURCE_IDS, buildKnowledgeBase } from "./knowledge";
 
@@ -28,7 +28,7 @@ Quy tắc:
 - Nhận xét ngắn gọn, cụ thể, tiếng Việt.
 Chỉ trả JSON đúng dạng: {"breakdown":[{"criterion":"diagnosis|steps|products|notes","score":number,"comment":string}],"correct":[{"point":string,"evidence":string}],"wrong":[{"statement":string,"correction":string}],"missing":string[],"unsafe":[{"issue":string,"reason":string}],"advice":string,"sourceIds":string[]}`;
 
-export async function gradePlan(generated: GeneratedCase, input: TreatmentPlanInput): Promise<AiGrade> {
+export async function gradePlan(generated: CaseCore, input: TreatmentPlanInput): Promise<AiGrade> {
   const user = `${buildKnowledgeBase()}\n\nCA: ${JSON.stringify({
     title: generated.title,
     description: generated.description,

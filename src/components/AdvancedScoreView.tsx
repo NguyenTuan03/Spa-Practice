@@ -3,10 +3,10 @@ import { Citation } from "@/components/Citation";
 import { SourceList } from "@/components/SourceList";
 import { CRITERION_LABEL } from "@/enums";
 import type { SourceRef } from "@/types";
-import type { CitedText, GeneratedCase, GradeResponse } from "@/types/advanced";
+import type { CaseCore, CitedText, GradeResponse } from "@/types/advanced";
 
 interface AdvancedScoreViewProps {
-  generated: GeneratedCase;
+  generated: CaseCore;
   referenceSources: SourceRef[];
   response: GradeResponse;
 }

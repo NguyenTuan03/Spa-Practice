@@ -22,18 +22,23 @@ export interface LibraryImage {
   sourceUrl: string;
 }
 
-export interface GeneratedCase {
+export interface CaseCore {
   title: string;
   description: string;
   skinType: SkinType;
   difficulty: Difficulty;
   condition: SkinCondition;
-  image: LibraryImage;
   reference: ReferencePlan;
 }
 
+export interface GeneratedCase extends CaseCore {
+  image: LibraryImage;
+}
+
+// image = ảnh do server tìm (thư viện tĩnh hoặc Commons); null nghĩa là dùng ảnh của người dùng
 export interface GenerateCaseResponse {
-  generated: GeneratedCase;
+  generated: CaseCore;
+  image: LibraryImage | null;
   sources: SourceRef[];
 }
 
@@ -77,7 +82,7 @@ export interface GradeResponse {
 
 export interface AdvancedAttempt {
   id: string;
-  generated: GeneratedCase;
+  generated: CaseCore;
   input: TreatmentPlanInput;
   response: GradeResponse;
   createdAt: string;

@@ -2,7 +2,8 @@ import "server-only";
 import { z } from "zod";
 import { Difficulty, SKIN_CONDITION_LABEL, SkinCondition, SkinType } from "@/enums";
 import { getAvailableConditions, pickImage } from "@/data/image-library";
-import type { CitedText, GeneratedCase } from "@/types/advanced";
+import { findCommonsImage, isCommonsEnabled } from "@/server/commons";
+import type { CaseCore, CitedText, LibraryImage } from "@/types/advanced";
 import { completeJson } from "./client";
 import { VALID_SOURCE_IDS, buildKnowledgeBase } from "./knowledge";
 
@@ -42,17 +43,39 @@ export interface GenerateOptions {
   skinType?: SkinType;
   difficulty?: Difficulty;
   condition?: SkinCondition;
+  // Các tình trạng mà người dùng đã tự thêm ảnh trong trình duyệt
+  userConditions: SkinCondition[];
 }
 
-export async function generateCase(options: GenerateOptions): Promise<GeneratedCase> {
-  const available = getAvailableConditions();
-  if (available.length === 0) {
-    throw new NoImageError("Thư viện ảnh đang trống. Thêm ảnh vào src/data/image-library.ts trước khi tạo ca.");
+export interface GenerateResult {
+  generated: CaseCore;
+  image: LibraryImage | null;
+}
+
+function allowedConditions(options: GenerateOptions): SkinCondition[] {
+  if (isCommonsEnabled()) return Object.values(SkinCondition);
+  return Object.values(SkinCondition).filter(
+    (condition) => options.userConditions.includes(condition) || getAvailableConditions().includes(condition),
+  );
+}
+
+// Ưu tiên: ảnh người dùng (client tự chọn) > thư viện tĩnh > Wikimedia Commons
+async function resolveImage(condition: SkinCondition, userConditions: SkinCondition[]): Promise<LibraryImage | null | undefined> {
+  if (userConditions.includes(condition)) return null;
+  const fromLibrary = pickImage(condition);
+  if (fromLibrary) return fromLibrary;
+  return isCommonsEnabled() ? findCommonsImage(condition) : undefined;
+}
+
+export async function generateCase(options: GenerateOptions): Promise<GenerateResult> {
+  const usable = allowedConditions(options);
+  if (options.condition && !usable.includes(options.condition)) {
+    throw new NoImageError(`Chưa có ảnh cho tình trạng "${SKIN_CONDITION_LABEL[options.condition]}". Hãy thêm ảnh của bạn vào Thư viện ảnh.`);
   }
-  if (options.condition && !available.includes(options.condition)) {
-    throw new NoImageError(`Chưa có ảnh cho tình trạng "${SKIN_CONDITION_LABEL[options.condition]}" trong thư viện.`);
+  if (usable.length === 0) {
+    throw new NoImageError("Chưa có ảnh nào. Hãy thêm ảnh của bạn (mục Thư viện ảnh) hoặc bật ảnh tự động từ Wikimedia Commons.");
   }
-  const allowed = options.condition ? [options.condition] : available;
+  const allowed = options.condition ? [options.condition] : usable;
   const allowedText = allowed.map((condition) => `${condition} (${SKIN_CONDITION_LABEL[condition]})`).join("; ");
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
@@ -65,24 +88,26 @@ export async function generateCase(options: GenerateOptions): Promise<GeneratedC
     const parsed = generatedSchema.safeParse(await completeJson(SYSTEM_PROMPT, user));
     if (!parsed.success || !allowed.includes(parsed.data.condition)) continue;
 
-    const image = pickImage(parsed.data.condition);
-    if (!image) continue;
+    const image = await resolveImage(parsed.data.condition, options.userConditions);
+    if (image === undefined) continue;
     const { reference } = parsed.data;
     return {
-      ...parsed.data,
       image,
-      reference: {
-        diagnosis: cleanCited(reference.diagnosis),
-        steps: reference.steps.map(cleanCited),
-        products: reference.products.map(cleanCited),
-        notes: reference.notes.map(cleanCited),
+      generated: {
+        ...parsed.data,
+        reference: {
+          diagnosis: cleanCited(reference.diagnosis),
+          steps: reference.steps.map(cleanCited),
+          products: reference.products.map(cleanCited),
+          notes: reference.notes.map(cleanCited),
+        },
       },
     };
   }
-  throw new Error("AI không tạo được ca hợp lệ, hãy thử lại");
+  throw new NoImageError("Không tìm được ảnh phù hợp cho ca vừa tạo. Hãy thử lại hoặc thêm ảnh của bạn vào Thư viện ảnh.");
 }
 
-export function collectReferenceSourceIds(generated: GeneratedCase): string[] {
+export function collectReferenceSourceIds(generated: CaseCore): string[] {
   const { diagnosis, steps, products, notes } = generated.reference;
   const ids = [diagnosis, ...steps, ...products, ...notes].flatMap((entry) => entry.sourceIds);
   return [...new Set(ids)];

@@ -20,14 +20,6 @@ const bodySchema = z.object({
     skinType: z.nativeEnum(SkinType),
     difficulty: z.nativeEnum(Difficulty),
     condition: z.nativeEnum(SkinCondition),
-    image: z.object({
-      id: z.string(),
-      condition: z.nativeEnum(SkinCondition),
-      url: z.string(),
-      credit: z.string(),
-      license: z.string(),
-      sourceUrl: z.string(),
-    }),
     reference: z.object({ diagnosis: cited, steps: citedList, products: citedList, notes: citedList }),
   }),
   input: z.object({

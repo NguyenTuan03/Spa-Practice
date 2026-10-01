@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { AdvancedScoreView } from "@/components/AdvancedScoreView";
+import { ImageLibraryManager } from "@/components/ImageLibraryManager";
 import { PlanFields } from "@/components/PlanFields";
 import {
   DIFFICULTY_LABEL,
@@ -19,10 +20,30 @@ import {
   saveAdvancedAttempt,
   setAccessCode,
 } from "@/lib/advanced-storage";
+import { getUserConditions, loadUserImages, pickUserImage } from "@/lib/user-images";
 import type { SourceRef, TreatmentPlanInput } from "@/types";
-import type { AdvancedAttempt, GenerateCaseResponse, GeneratedCase, GradeResponse } from "@/types/advanced";
+import type {
+  AdvancedAttempt,
+  CaseCore,
+  GenerateCaseResponse,
+  GeneratedCase,
+  GradeResponse,
+  LibraryImage,
+} from "@/types/advanced";
 
 const ANY = "";
+
+// Bỏ ảnh (có thể là data URL lớn) trước khi gửi server hoặc lưu lịch sử
+function toCaseCore(value: GeneratedCase): CaseCore {
+  return {
+    title: value.title,
+    description: value.description,
+    skinType: value.skinType,
+    difficulty: value.difficulty,
+    condition: value.condition,
+    reference: value.reference,
+  };
+}
 
 export default function AdvancedPage(): ReactNode {
   const [code, setCode] = useState<string>("");
@@ -30,6 +51,7 @@ export default function AdvancedPage(): ReactNode {
   const [difficulty, setDifficulty] = useState<Difficulty | typeof ANY>(ANY);
   const [condition, setCondition] = useState<SkinCondition | typeof ANY>(ANY);
   const [referenceSources, setReferenceSources] = useState<SourceRef[]>([]);
+  const [userImages, setUserImages] = useState<LibraryImage[]>([]);
   const [generated, setGenerated] = useState<GeneratedCase | undefined>();
   const [result, setResult] = useState<GradeResponse | undefined>();
   const [creating, setCreating] = useState<boolean>(false);
@@ -39,6 +61,7 @@ export default function AdvancedPage(): ReactNode {
   useEffect(() => {
     setCode(getAccessCode());
     setHistory(loadAdvancedAttempts());
+    setUserImages(loadUserImages());
   }, []);
 
   async function handleCreate(): Promise<void> {
@@ -47,33 +70,39 @@ export default function AdvancedPage(): ReactNode {
     setResult(undefined);
     setAccessCode(code);
     const data = await postAi<
-      { skinType?: SkinType; difficulty?: Difficulty; condition?: SkinCondition },
+      { skinType?: SkinType; difficulty?: Difficulty; condition?: SkinCondition; userConditions: SkinCondition[] },
       GenerateCaseResponse
     >("/api/ai/generate-case", {
       skinType: skinType || undefined,
       difficulty: difficulty || undefined,
       condition: condition || undefined,
+      userConditions: getUserConditions(userImages),
     });
     setCreating(false);
     if (typeof data === "string") {
       setError(data);
       return;
     }
-    setGenerated(data.generated);
+    const image = pickUserImage(userImages, data.generated.condition) ?? data.image;
+    if (!image) {
+      setError("Không có ảnh cho ca này, hãy thử lại");
+      return;
+    }
+    setGenerated({ ...data.generated, image });
     setReferenceSources(data.sources);
   }
 
   async function handleGrade(input: TreatmentPlanInput): Promise<string | undefined> {
     if (!generated) return "Chưa có ca";
-    const data = await postAi<{ generated: GeneratedCase; input: TreatmentPlanInput }, GradeResponse>(
+    const data = await postAi<{ generated: CaseCore; input: TreatmentPlanInput }, GradeResponse>(
       "/api/ai/grade",
-      { generated, input },
+      { generated: toCaseCore(generated), input },
     );
     if (typeof data === "string") return data;
 
     const attempt: AdvancedAttempt = {
       id: crypto.randomUUID(),
-      generated,
+      generated: toCaseCore(generated),
       input,
       response: data,
       createdAt: new Date().toISOString(),
@@ -135,6 +164,7 @@ export default function AdvancedPage(): ReactNode {
           {creating ? "AI đang tạo ca..." : "Tạo ca bằng AI"}
         </button>
       </section>
+      <ImageLibraryManager images={userImages} onChange={setUserImages} />
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {generated && (
