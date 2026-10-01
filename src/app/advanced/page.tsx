@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { AdvancedScoreView } from "@/components/AdvancedScoreView";
 import { ImageLibraryManager } from "@/components/ImageLibraryManager";
-import { FlaskIcon, SparklesIcon, SpinnerIcon } from "@/components/icons";
+import { ChevronDownIcon, FlaskIcon, SparklesIcon, SpinnerIcon } from "@/components/icons";
 import { PlanFields } from "@/components/PlanFields";
 import { Badge } from "@/components/ui";
 import {
@@ -35,7 +35,7 @@ import type {
 
 const ANY = "";
 const selectClass =
-  "w-full appearance-none rounded-xl border border-stone-200 bg-white p-3 text-base text-stone-700 shadow-sm transition-colors duration-200 focus:border-rose-400 focus:outline-none sm:text-sm";
+  "w-full appearance-none rounded-xl border border-stone-200 bg-white p-3 pr-9 text-base text-stone-700 shadow-sm transition-colors duration-200 focus:border-rose-400 focus:outline-none sm:text-sm";
 
 // Bỏ ảnh (có thể là data URL lớn) trước khi gửi server hoặc lưu lịch sử
 function toCaseCore(value: GeneratedCase): CaseCore {
@@ -71,14 +71,17 @@ function FilterSelect<T extends string>({
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-medium text-stone-500">{label}</span>
-      <select value={value} onChange={(event) => onChange(event.target.value as T | typeof ANY)} className={selectClass}>
-        <option value={ANY}>AI tự chọn</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {labels[option]}
-          </option>
-        ))}
-      </select>
+      <div className="relative">
+        <select value={value} onChange={(event) => onChange(event.target.value as T | typeof ANY)} className={selectClass}>
+          <option value={ANY}>AI tự chọn</option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {labels[option]}
+            </option>
+          ))}
+        </select>
+        <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+      </div>
     </label>
   );
 }

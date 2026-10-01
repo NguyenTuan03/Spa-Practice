@@ -65,15 +65,18 @@ export function ImageLibraryManager({ images, onChange }: ImageLibraryManagerPro
       </summary>
       <div className="space-y-4 border-t border-rose-100 p-4 sm:p-5">
         <form onSubmit={handleAdd} className="grid gap-3 sm:grid-cols-2">
-          <select
-            value={condition}
-            onChange={(event) => setCondition(event.target.value as SkinCondition)}
-            className={`${inputClass} appearance-none sm:col-span-2`}
-          >
-            {Object.values(SkinCondition).map((value) => (
-              <option key={value} value={value}>{SKIN_CONDITION_LABEL[value]}</option>
-            ))}
-          </select>
+          <div className="relative sm:col-span-2">
+            <select
+              value={condition}
+              onChange={(event) => setCondition(event.target.value as SkinCondition)}
+              className={`${inputClass} appearance-none pr-9`}
+            >
+              {Object.values(SkinCondition).map((value) => (
+                <option key={value} value={value}>{SKIN_CONDITION_LABEL[value]}</option>
+              ))}
+            </select>
+            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+          </div>
 
           <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 bg-stone-50 p-3 text-sm text-stone-600 transition-colors duration-200 hover:border-rose-300 hover:bg-rose-50/50 sm:col-span-2">
             <UploadIcon className="h-4 w-4 shrink-0" />
@@ -119,7 +122,7 @@ export function ImageLibraryManager({ images, onChange }: ImageLibraryManagerPro
                   type="button"
                   onClick={() => commit(images.filter((item) => item.id !== image.id))}
                   aria-label={`Xóa ảnh ${SKIN_CONDITION_LABEL[image.condition]}`}
-                  className="absolute right-1.5 top-1.5 grid h-8 w-8 cursor-pointer place-items-center rounded-full bg-white/90 text-red-600 shadow-sm transition-colors duration-200 hover:bg-red-600 hover:text-white"
+                  className="absolute right-1 top-1 grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-white/90 text-red-600 shadow-sm transition-colors duration-200 hover:bg-red-600 hover:text-white"
                 >
                   <TrashIcon className="h-4 w-4" />
                 </button>
