@@ -1,33 +1,18 @@
 # Spa Practice
 
-Luyện phác đồ chăm sóc da mặt. Chấm điểm tự động bằng checklist từ khóa, không cần API key.
+Luyện phác đồ chăm sóc da mặt: AI tạo ca (kèm ảnh từ thư viện), bạn viết chẩn đoán, quy trình, sản phẩm, lưu ý, AI chấm nghiêm và trích dẫn nguồn.
 
 ## Chạy
-`yarn install && yarn dev`. Deploy Vercel: import repo, không cần biến môi trường.
+`yarn install && yarn dev` rồi mở `/advanced` (trang chủ tự chuyển hướng).
+Biến môi trường (xem `.env.example`): `AI_PROVIDER` (`gemini` | `openai` | `openai-compatible`), `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL` (chỉ openai-compatible), `ADVANCED_ACCESS_CODE`.
+Khi deploy Vercel hãy đặt `ADVANCED_ACCESS_CODE`, nếu không ai biết link cũng dùng được key của bạn.
 
-## Cách chấm
-- Mỗi ca có checklist (`src/server/keys/*.ts`) chia 4 tiêu chí: chẩn đoán 30, quy trình 30, sản phẩm 25, lưu ý 15.
-- Một ý được tính khi bài làm chứa một trong các từ khóa (bỏ dấu, không phân biệt hoa thường).
-- Nội dung đề xuất điều trị có hành động nguy hiểm (không bị phủ định) bị trừ 5 điểm mỗi lỗi, tối đa 10.
-- Hạn chế: chấm theo từ khóa nên có thể sót cách diễn đạt khác và đôi khi trùng từ ngẫu nhiên. Thêm từ khóa vào checklist để cải thiện.
-- Kiểm thử: `yarn test:scoring`.
+## Cơ sở kiến thức cho AI
+`src/server/keys/*.ts` là các ý chuẩn đã gắn nguồn (AAD, JAAD 2024, NRS 2019...) và `src/server/sources.ts` là danh sách nguồn. Hai phần này không hiển thị như ca mẫu mà được đưa vào prompt để AI bám nguồn khi ra đề và chấm, nên đừng xóa. Muốn thêm kiến thức: thêm ý vào keys và nguồn vào sources.
 
-## Nguồn dữ liệu
-Mỗi ý trong checklist gắn với nguồn trong `src/server/sources.ts` (AAD, hướng dẫn JAAD 2024, NRS 2019, tổng quan tretinoin 2025), kèm tên bác sĩ thẩm định khi trang gốc ghi. Ý nào `sourceIds` rỗng là kinh nghiệm thực hành, giao diện hiện ghi chú "chưa có trích dẫn". Cần chuyên gia duyệt trước khi dùng đào tạo thật.
+## Thư viện ảnh
+Tab chỉ tạo ca cho tình trạng đã có ảnh trong `src/data/image-library.ts` (url có thể là file trong `public/images/library/` hoặc địa chỉ ảnh https; ghi tác giả, giấy phép, link gốc). Thư viện trống thì báo lỗi, không tạo ca.
+Không lấy ảnh tự động từ Google Images. Ảnh Creative Commons: commons.wikimedia.org hoặc lọc "Quyền sử dụng" trên Google Images.
 
-## Ca và ảnh
-Ca mô phỏng ở `src/data/cases.ts`. Ảnh đang là placeholder; thêm ảnh có quyền sử dụng vào `imageUrl` và ghi nguồn ở `imageCredit`.
-Lịch sử điểm lưu trong localStorage (`src/lib/storage.ts`).
-
-## Tab Nâng cao (AI ra đề + chấm)
-Tùy chọn, cần API key. Đặt biến môi trường (xem `.env.example`): `AI_PROVIDER` (`gemini`, `openai` hoặc `openai-compatible`), `AI_API_KEY`, `AI_MODEL`, và `AI_BASE_URL` nếu dùng openai-compatible (DeepSeek, OpenAI, Groq, OpenRouter...).
-- AI nhận cơ sở kiến thức đã kiểm chứng (checklist + nguồn) trong prompt, nên bám theo nguồn thay vì tự bịa. Ca và phác đồ do AI tạo vẫn chưa có chuyên gia duyệt.
-- Khi deploy công khai, đặt `ADVANCED_ACCESS_CODE` để người lạ không dùng hết quota; nhập mã này trong tab Nâng cao.
-- Đường Gemini chưa được thử với API thật; đường openai-compatible đã thử với server giả lập.
-
-## Thư viện ảnh cho tab Nâng cao
-- Tab Nâng cao chỉ tạo ca cho tình trạng đã có ảnh trong `src/data/image-library.ts`; thư viện trống thì báo lỗi, không tạo ca không có ảnh.
-- Bỏ ảnh vào `public/images/library/`, khai báo tình trạng, tác giả, giấy phép, link gốc (có ví dụ trong file). Ảnh hiển thị kèm credit và link nguồn.
-- Không lấy ảnh tự động từ Google Images (vi phạm điều khoản và bản quyền). Tự lọc: Google Images > Công cụ > Quyền sử dụng > Giấy phép Creative Commons, hoặc tìm trên commons.wikimedia.org, rồi kiểm tra lại trang gốc.
-- AI chọn tình trạng khớp ảnh nhưng không nhìn ảnh, nên mức độ trên ảnh có thể khác mô tả ca.
-- Mỗi ý trong phác đồ tham chiếu có số [n] trỏ tới nguồn; ý không có nguồn được ghi rõ.
+## Lưu ý
+Ca, phác đồ tham chiếu và điểm đều do AI tạo, chưa có chuyên gia duyệt. Lịch sử điểm lưu ở localStorage của trình duyệt. Đường gọi Gemini và OpenAI chưa thử với API thật.

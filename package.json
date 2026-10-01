@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "tsc": "tsc --noEmit",
-    "test:scoring": "tsx --conditions react-server scripts/test-scoring.ts"
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
     "next": "^15.5.0",
